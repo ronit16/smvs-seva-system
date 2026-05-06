@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/monthly-reminder",
+      "schedule": "0 8 1 * *"
+    },
+    {
+      "path": "/api/cron/weekly-reminder",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/media-cleanup",
+      "schedule": "0 2 * * 0"
+    }
+  ]
+}

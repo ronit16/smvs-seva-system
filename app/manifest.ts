@@ -1,0 +1,14 @@
+import type { MetadataRoute } from 'next'
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'SMVS Seva Management System',
+    short_name: 'SMVS Seva',
+    description: 'Digital platform for seva distribution and tracking — SMVS Swaminarayan Sanstha',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#3D0C00',
+    theme_color: '#8B1A1A',
+    icons: [],
+  }
+}

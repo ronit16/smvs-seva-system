@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --saffron:       #D95C00;
+  --saffron-light: #F27830;
+  --saffron-dark:  #A84400;
+  --gold:          #C9880D;
+  --gold-light:    #F0B429;
+  --gold-lighter:  #FDF3DC;
+  --maroon:        #8B1A1A;
+  --maroon-dark:   #5C0F0F;
+  --cream:         #FFF9F2;
+  --cream2:        #FFF3E0;
+  --text:          #2C1810;
+  --text-muted:    #6B4C3B;
+  --border:        #E8D5C4;
+  --border-gold:   #D4A662;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 4px; }
+
+/* ── Sidebar ── */
+.sidebar-gradient {
+  background: linear-gradient(180deg, #3D0C00 0%, #6B1414 50%, #8B2020 100%);
+}
+
+/* ── Login background ── */
+.login-gradient {
+  background: linear-gradient(135deg, #3D0C00 0%, #7B1818 35%, #C9640A 70%, #E8A020 100%);
+}
+
+/* ── Login input ── */
+.smvs-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: #fafafa;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.smvs-input:focus { border-color: var(--saffron); background: #fff; }
+
+/* ── Gold divider ── */
+.gold-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.4;
+}
+
+/* ── Stat card top border ── */
+.stat-card-orange::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+  border-radius: 16px 16px 0 0;
+}
+.stat-card-maroon::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--maroon), var(--saffron));
+  border-radius: 16px 16px 0 0;
+}
+.stat-card-green::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2E7D32, #66BB6A);
+  border-radius: 16px 16px 0 0;
+}
+.stat-card-blue::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1565C0, #42A5F5);
+  border-radius: 16px 16px 0 0;
+}
+
+/* ── Progress bar ── */
+.progress-fill {
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+}
+
+/* ── Table row hover ── */
+tbody tr:hover td {
+  background: rgba(255, 243, 224, 0.5);
+}
+
+/* ── Seva card hover ── */
+.seva-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ── Input focus ── */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--saffron) !important;
+}
+
+/* ── Animate on mount ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeup {
+  animation: fadeUp 0.35s ease forwards;
+}
