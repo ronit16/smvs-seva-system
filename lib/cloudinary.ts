@@ -27,13 +27,16 @@ export async function uploadToCloudinary(
       {
         folder: `smvs-seva-system/${folder}`,
         resource_type: resourceType,
-        transformation: folder === 'seva-proofs'
-          ? [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto:good' }]
-          : undefined,
       },
       (error, result) => {
         if (error || !result) return reject(error || new Error('Upload failed'))
-        resolve({ url: result.secure_url, publicId: result.public_id })
+        const url = folder === 'seva-proofs' && resourceType !== 'video'
+          ? cloudinary.url(result.public_id, {
+              width: 1200, height: 1200, crop: 'limit',
+              quality: 'auto:good', fetch_format: 'auto', secure: true,
+            })
+          : result.secure_url
+        resolve({ url, publicId: result.public_id })
       }
     )
     uploadStream.end(buffer)

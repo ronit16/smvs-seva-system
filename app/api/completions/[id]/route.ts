@@ -12,9 +12,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const updateData: Record<string, unknown> = { admin_remark }
   if (remark_media_url) {
-    updateData.remark_media_url       = remark_media_url
-    updateData.remark_media_public_id = remark_media_public_id
-    updateData.media_expires_at       = addDays(new Date(), 30).toISOString()
+    updateData.remark_media_url         = remark_media_url
+    updateData.remark_media_public_id   = remark_media_public_id
+    updateData.remark_media_expires_at  = addDays(new Date(), 30).toISOString()
   }
 
   const { data, error } = await supabaseAdmin

@@ -94,10 +94,11 @@ CREATE TABLE seva_completions (
   proof_public_id        TEXT,           -- Cloudinary public_id for deletion
   user_suchan            TEXT,           -- Member's personal note
   admin_remark           TEXT,           -- Sant's remark (never deleted)
-  remark_media_url       TEXT,
-  remark_media_public_id TEXT,
-  media_expires_at       TIMESTAMPTZ,   -- 30 days from upload
-  created_at             TIMESTAMPTZ DEFAULT NOW()
+  remark_media_url          TEXT,
+  remark_media_public_id    TEXT,
+  media_expires_at          TIMESTAMPTZ,   -- 30 days from proof upload
+  remark_media_expires_at   TIMESTAMPTZ,   -- 30 days from remark media upload
+  created_at                TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ──────────────────────────────────────────────────────────────
@@ -113,7 +114,8 @@ CREATE INDEX idx_assignments_center   ON seva_assignments(center_id);
 CREATE INDEX idx_completions_seva     ON seva_completions(seva_id);
 CREATE INDEX idx_completions_member   ON seva_completions(member_id);
 CREATE INDEX idx_completions_center   ON seva_completions(center_id);
-CREATE INDEX idx_completions_expires  ON seva_completions(media_expires_at);
+CREATE INDEX idx_completions_expires         ON seva_completions(media_expires_at);
+CREATE INDEX idx_completions_remark_expires  ON seva_completions(remark_media_expires_at);
 
 -- ──────────────────────────────────────────────────────────────
 -- ROW LEVEL SECURITY (RLS)

@@ -5,7 +5,6 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'SMVS Seva Management System',
   description: 'Digital platform for seva distribution and tracking — SMVS Swaminarayan Sanstha',
-  manifest: '/manifest.json',
 }
 
 export const viewport: Viewport = {

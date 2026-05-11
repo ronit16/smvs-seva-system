@@ -40,6 +40,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message || 'Upload failed' }, { status: 500 })
   }
 }
-
-// Required for file uploads
-export const config = { api: { bodyParser: false } }

@@ -84,6 +84,7 @@ export interface SevaCompletion {
   remark_media_url: string | null
   remark_media_public_id: string | null
   media_expires_at: string | null
+  remark_media_expires_at: string | null
   created_at: string
   // joined
   member?: Member
