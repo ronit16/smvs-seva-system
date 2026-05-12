@@ -1,32 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 
 type LoginRole = 'superadmin' | 'admin' | 'member'
 
-const CENTERS = [
-  { id: '11111111-1111-1111-1111-111111111111', name: 'Ahmedabad Center' },
-  { id: '22222222-2222-2222-2222-222222222222', name: 'Surat Center' },
-  { id: '33333333-3333-3333-3333-333333333333', name: 'Mumbai Center' },
-  { id: '44444444-4444-4444-4444-444444444444', name: 'Rajkot Center' },
-]
+interface Center { id: string; name: string }
 
 export default function LoginPage() {
   const [role, setRole] = useState<LoginRole>('superadmin')
   const [loading, setLoading] = useState(false)
+  const [centers, setCenters] = useState<Center[]>([])
 
   // Super Admin fields
   const [saEmail, setSaEmail]  = useState('')
   const [saPass,  setSaPass]   = useState('')
 
   // Center Admin fields
-  const [aCenter, setACenter] = useState(CENTERS[0].id)
+  const [aCenter, setACenter] = useState('')
   const [aEmail,  setAEmail]  = useState('')
   const [aPass,   setAPass]   = useState('')
 
   // Member field
   const [memberId, setMemberId] = useState('')
+
+  useEffect(() => {
+    fetch('/api/centers/public')
+      .then(r => r.json())
+      .then(({ data }) => {
+        if (data?.length) {
+          setCenters(data)
+          setACenter(data[0].id)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +61,8 @@ export default function LoginPage() {
       if (role === 'superadmin') window.location.href = '/super-admin'
       else if (role === 'admin') window.location.href = '/admin'
       else                       window.location.href = '/member'
+    } catch {
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -113,7 +123,7 @@ export default function LoginPage() {
           {role === 'admin' && (<>
             <Field label="Center">
               <select value={aCenter} onChange={e=>setACenter(e.target.value)} className="smvs-input">
-                {CENTERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {centers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </Field>
             <Field label="Admin Email">

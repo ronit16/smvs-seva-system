@@ -7,14 +7,17 @@ import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 
 interface Member {
   global_id: string; name: string; phone: string; active: boolean
+  assignments?: [{ count: number }]
+  completions?: [{ count: number }]
 }
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState<'add' | 'edit' | null>(null)
+  const [modal, setModal] = useState<'add' | 'edit' | 'delete' | null>(null)
   const [editing, setEditing] = useState<Member | null>(null)
+  const [deleting, setDeleting] = useState<Member | null>(null)
 
   const [fId, setFId]     = useState('')
   const [fName, setFName] = useState('')
@@ -53,10 +56,14 @@ export default function MembersPage() {
     toast.success('Member updated!'); setModal(null); load()
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Remove this member and all their assignments?')) return
-    await fetch(`/api/members/${id}`, { method: 'DELETE' })
-    toast.success('Member removed'); load()
+  function openDelete(m: Member) {
+    setDeleting(m); setModal('delete')
+  }
+
+  async function handleDelete() {
+    if (!deleting) return
+    await fetch(`/api/members/${deleting.global_id}`, { method: 'DELETE' })
+    toast.success('Member removed'); setModal(null); load()
   }
 
   const filtered = members.filter(m =>
@@ -106,15 +113,15 @@ export default function MembersPage() {
                 </td>
                 <td className="px-5 py-3 font-semibold text-sm">{m.name}</td>
                 <td className="px-5 py-3 text-sm text-[var(--text-muted)]">{m.phone}</td>
-                <td className="px-5 py-3 text-sm text-center">—</td>
-                <td className="px-5 py-3 text-sm text-center">—</td>
+                <td className="px-5 py-3 text-sm text-center">{m.assignments?.[0]?.count ?? 0}</td>
+                <td className="px-5 py-3 text-sm text-center">{m.completions?.[0]?.count ?? 0}</td>
                 <td className="px-5 py-3">
                   <div className="flex gap-2">
                     <button onClick={() => openEdit(m)}
                       className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--saffron)] hover:text-[var(--saffron)]">
                       <Pencil size={13}/>
                     </button>
-                    <button onClick={() => handleDelete(m.global_id)}
+                    <button onClick={() => openDelete(m)}
                       className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-500">
                       <Trash2 size={13}/>
                     </button>
@@ -166,6 +173,23 @@ export default function MembersPage() {
         <ModalField label="WhatsApp Phone">
           <input value={fPhone} onChange={e => setFPhone(e.target.value)} className={inputClass}/>
         </ModalField>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={modal === 'delete'} onClose={() => setModal(null)} title="Remove Member"
+        footer={<>
+          <button onClick={() => setModal(null)} className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-semibold">Cancel</button>
+          <button onClick={handleDelete} className="px-5 py-2 rounded-xl text-white text-sm font-semibold bg-red-600 hover:bg-red-700">Remove</button>
+        </>}
+      >
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[var(--text)]">
+            Are you sure you want to remove <span className="font-semibold">{deleting?.name}</span>?
+          </p>
+          <p className="text-xs text-[var(--text-muted)]">
+            This will permanently delete their profile and all seva assignments. This action cannot be undone.
+          </p>
+        </div>
       </Modal>
     </div>
   )

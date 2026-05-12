@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('members')
-    .select('*, center:centers(id,name)')
+    .select('*, center:centers(id,name), assignments:seva_assignments(count), completions:seva_completions(count)')
     .order('name')
 
   // Center Admin: restricted to their center

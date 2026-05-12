@@ -6,8 +6,9 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 export default function CategoriesPage() {
   const [cats, setCats] = useState<any[]>([])
-  const [modal, setModal] = useState<'add' | 'edit' | null>(null)
+  const [modal, setModal] = useState<'add' | 'edit' | 'delete' | null>(null)
   const [editing, setEditing] = useState<any | null>(null)
+  const [deleting, setDeleting] = useState<any | null>(null)
   const [fName, setFName] = useState('')
   const [fDesc, setFDesc] = useState('')
 
@@ -44,10 +45,12 @@ export default function CategoriesPage() {
     toast.success('Updated!'); setModal(null); load()
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this category? All sevas inside will also be deleted.')) return
-    await fetch(`/api/categories/${id}`, { method: 'DELETE' })
-    toast.success('Deleted'); load()
+  function openDelete(c: any) { setDeleting(c); setModal('delete') }
+
+  async function handleDelete() {
+    if (!deleting) return
+    await fetch(`/api/categories/${deleting.id}`, { method: 'DELETE' })
+    toast.success('Deleted'); setModal(null); load()
   }
 
   return (
@@ -71,7 +74,7 @@ export default function CategoriesPage() {
               <div className="font-cinzel text-sm font-bold" style={{ color: 'var(--maroon)' }}>{c.name}</div>
               <div className="flex gap-1.5">
                 <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--saffron)] hover:text-[var(--saffron)]"><Pencil size={13} /></button>
-                <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-500"><Trash2 size={13} /></button>
+                <button onClick={() => openDelete(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-500"><Trash2 size={13} /></button>
               </div>
             </div>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">{c.description || 'No description'}</p>
@@ -111,6 +114,21 @@ export default function CategoriesPage() {
         <ModalField label="Description">
           <textarea value={fDesc} onChange={e => setFDesc(e.target.value)} className={textareaClass} />
         </ModalField>
+      </Modal>
+
+      <Modal open={modal === 'delete'} onClose={() => setModal(null)} title="Delete Category"
+        footer={<>
+          <button onClick={() => setModal(null)} className="px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-semibold">Cancel</button>
+          <button onClick={handleDelete} className="px-5 py-2 rounded-xl text-white text-sm font-semibold bg-red-600 hover:bg-red-700">Delete</button>
+        </>}>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[var(--text)]">
+            Are you sure you want to delete <span className="font-semibold">{deleting?.name}</span>?
+          </p>
+          <p className="text-xs text-[var(--text-muted)]">
+            All sevas inside this category and their member assignments will also be permanently deleted. This action cannot be undone.
+          </p>
+        </div>
       </Modal>
     </div>
   )
