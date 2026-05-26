@@ -30,6 +30,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authorised as admin' }, { status: 403 })
     }
 
+    // Enforce correct tab: super admin must use Super Admin tab
+    if (role === 'admin' && adminUser.role !== 'center_admin') {
+      return NextResponse.json({ error: 'This account is not a Center Admin. Please use the Super Admin tab.' }, { status: 403 })
+    }
+
     // For center_admin: verify they belong to the selected center
     if (adminUser.role === 'center_admin' && centerId && adminUser.center_id !== centerId) {
       return NextResponse.json({ error: 'Wrong center selected' }, { status: 403 })

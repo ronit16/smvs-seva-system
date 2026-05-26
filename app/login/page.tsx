@@ -58,9 +58,9 @@ export default function LoginPage() {
       }
 
       toast.success('Jai Swaminarayan 🙏')
-      if (role === 'superadmin') window.location.href = '/super-admin'
-      else if (role === 'admin') window.location.href = '/admin'
-      else                       window.location.href = '/member'
+      if (data.role === 'super_admin') window.location.href = '/super-admin'
+      else if (data.role === 'center_admin') window.location.href = '/admin'
+      else                                   window.location.href = '/member'
     } catch {
       toast.error('Something went wrong. Please try again.')
     } finally {
