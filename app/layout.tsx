@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   title: 'SMVS Seva Management System',
   description: 'Digital platform for seva distribution and tracking — SMVS Swaminarayan Sanstha',
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [{ url: '/smvs-icon.png', type: 'image/png' }],
+    shortcut: '/smvs-icon.png',
+    apple: '/smvs-icon.png',
   },
 }
 
