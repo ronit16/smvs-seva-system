@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -7,21 +7,28 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!session || session.role === 'member') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await req.json()
-  const { data, error } = await supabaseAdmin
-    .from('seva_categories')
-    .update({ name: body.name, description: body.description })
-    .eq('id', params.id)
-    .select().single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+  try {
+    const [data] = await sql`
+      UPDATE seva_categories
+      SET name = ${body.name}, description = ${body.description || null}
+      WHERE id = ${params.id}
+      RETURNING *
+    `
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession()
   if (!session || session.role === 'member') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { error } = await supabaseAdmin.from('seva_categories').delete().eq('id', params.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  try {
+    await sql`DELETE FROM seva_categories WHERE id = ${params.id}`
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

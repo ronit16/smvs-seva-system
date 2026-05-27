@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { sendWhatsApp, msgMonthlyReminder } from '@/lib/whatsapp'
 
 /**
@@ -7,62 +7,70 @@ import { sendWhatsApp, msgMonthlyReminder } from '@/lib/whatsapp'
  * Sends a WhatsApp reminder to all active members listing their pending sevas.
  */
 export async function GET(req: NextRequest) {
-  // Security: only Vercel cron can call this
   const auth = req.headers.get('authorization')
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
-  // Fetch all active assignments (without a completion this month)
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
+  const startOfMonthStr = startOfMonth.toISOString().split('T')[0]
 
-  const { data: assignments } = await supabaseAdmin
-    .from('seva_assignments')
-    .select(`
-      id, member_id, seva_id,
-      member:members(global_id, name, phone, center_id),
-      seva:sevas(name, center:centers(name)),
-      completions:seva_completions(id, completed_date)
-    `)
+  try {
+    const assignments = await sql`
+      SELECT
+        sa.id, sa.member_id, sa.seva_id,
+        json_build_object('global_id', m.global_id, 'name', m.name, 'phone', m.phone, 'center_id', m.center_id) AS member,
+        json_build_object('name', sv.name, 'center', json_build_object('name', c.name)) AS seva,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', sc.id, 'completed_date', sc.completed_date::text))
+           FROM seva_completions sc WHERE sc.assignment_id = sa.id),
+          '[]'::json
+        ) AS completions
+      FROM seva_assignments sa
+      JOIN members m ON m.global_id = sa.member_id AND m.active = true
+      JOIN sevas sv ON sv.id = sa.seva_id AND sv.active = true
+      JOIN centers c ON c.id = sv.center_id
+    `
 
-  if (!assignments) return NextResponse.json({ sent: 0 })
+    // Group pending sevas by member
+    const pendingByMember: Record<string, { member: any; sevaNames: string[]; centerName: string }> = {}
 
-  // Group pending sevas by member
-  const pendingByMember: Record<string, { member: any; sevaNames: string[]; centerName: string }> = {}
+    for (const a of assignments) {
+      const member: any = a.member
+      const seva: any   = a.seva
+      const completions: any[] = a.completions || []
 
-  for (const a of assignments) {
-    const member = (a as any).member
-    const seva   = (a as any).seva
-    const completions: any[] = (a as any).completions || []
+      const completedThisMonth = completions.some(
+        c => new Date(c.completed_date) >= startOfMonth
+      )
+      if (completedThisMonth) continue
 
-    // Check if completed this month
-    const completedThisMonth = completions.some(
-      c => new Date(c.completed_date) >= startOfMonth
-    )
-    if (completedThisMonth) continue
-
-    const key = member.global_id
-    if (!pendingByMember[key]) {
-      pendingByMember[key] = {
-        member,
-        sevaNames:  [],
-        centerName: seva.center?.name || 'SMVS Center',
+      const key = member.global_id
+      if (!pendingByMember[key]) {
+        pendingByMember[key] = {
+          member,
+          sevaNames:  [],
+          centerName: seva.center?.name || 'SMVS Center',
+        }
       }
+      pendingByMember[key].sevaNames.push(seva.name)
     }
-    pendingByMember[key].sevaNames.push(seva.name)
-  }
 
-  let sent = 0
-  for (const { member, sevaNames, centerName } of Object.values(pendingByMember)) {
-    const ok = await sendWhatsApp(
-      member.phone,
-      msgMonthlyReminder({ memberName: member.name, sevaNames, centerName })
-    )
-    if (ok) sent++
-  }
+    let sent = 0
+    for (const { member, sevaNames, centerName } of Object.values(pendingByMember)) {
+      const ok = await sendWhatsApp(
+        member.phone,
+        msgMonthlyReminder({ memberName: member.name, sevaNames, centerName })
+      )
+      if (ok) sent++
+    }
 
-  console.log(`[CronMonthly] Sent ${sent} WhatsApp reminders`)
-  return NextResponse.json({ ok: true, sent })
+    console.log(`[CronMonthly] Sent ${sent} WhatsApp reminders`)
+    return NextResponse.json({ ok: true, sent })
+  } catch (err: any) {
+    console.error('[CronMonthly] Error:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

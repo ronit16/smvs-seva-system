@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import StatCard from '@/components/ui/StatCard'
 import Badge from '@/components/ui/Badge'
@@ -11,35 +11,45 @@ export default async function SuperAdminDashboard() {
   if (!session || session.role !== 'super_admin') redirect('/login')
 
   const [
-    { data: centers },
-    { count: totalMembers },
-    { count: totalSevas },
-    { count: totalCompletions },
-    { data: recentComps },
+    centers,
+    [{ total_members }],
+    [{ total_sevas }],
+    [{ total_completions }],
+    recentComps,
   ] = await Promise.all([
-    supabaseAdmin.from('centers').select('*'),
-    supabaseAdmin.from('members').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('sevas').select('*', { count: 'exact', head: true }).eq('active', true),
-    supabaseAdmin.from('seva_completions').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('seva_completions')
-      .select('*, member:members(name), seva:sevas(name), center:centers(name)')
-      .order('created_at', { ascending: false })
-      .limit(8),
+    sql`SELECT * FROM centers ORDER BY name`,
+    sql`SELECT COUNT(*)::int AS total_members FROM members`,
+    sql`SELECT COUNT(*)::int AS total_sevas FROM sevas WHERE active = true`,
+    sql`SELECT COUNT(*)::int AS total_completions FROM seva_completions`,
+    sql`
+      SELECT
+        sc.id, sc.admin_remark,
+        sc.completed_date::text AS completed_date,
+        json_build_object('name', m.name) AS member,
+        json_build_object('name', sv.name) AS seva,
+        json_build_object('name', c.name) AS center
+      FROM seva_completions sc
+      JOIN members m ON m.global_id = sc.member_id
+      JOIN sevas sv ON sv.id = sc.seva_id
+      JOIN centers c ON c.id = sc.center_id
+      ORDER BY sc.created_at DESC
+      LIMIT 8
+    `,
   ])
 
   // Per-center stats
   const centerStats = await Promise.all(
-    (centers || []).map(async (c: Center) => {
+    (centers as Center[]).map(async (c) => {
       const [
-        { count: mc },
-        { count: sc },
-        { count: cc },
-        { count: ac },
+        [{ mc }],
+        [{ sc }],
+        [{ cc }],
+        [{ ac }],
       ] = await Promise.all([
-        supabaseAdmin.from('members').select('*', { count: 'exact', head: true }).eq('center_id', c.id),
-        supabaseAdmin.from('sevas').select('*', { count: 'exact', head: true }).eq('center_id', c.id),
-        supabaseAdmin.from('seva_completions').select('*', { count: 'exact', head: true }).eq('center_id', c.id),
-        supabaseAdmin.from('seva_assignments').select('*', { count: 'exact', head: true }).eq('center_id', c.id),
+        sql`SELECT COUNT(*)::int AS mc FROM members WHERE center_id = ${c.id}`,
+        sql`SELECT COUNT(*)::int AS sc FROM sevas WHERE center_id = ${c.id} AND active = true`,
+        sql`SELECT COUNT(*)::int AS cc FROM seva_completions WHERE center_id = ${c.id}`,
+        sql`SELECT COUNT(*)::int AS ac FROM seva_assignments WHERE center_id = ${c.id}`,
       ])
       return { center: c, members: mc || 0, sevas: sc || 0, completions: cc || 0, assignments: ac || 0 }
     })
@@ -56,10 +66,10 @@ export default async function SuperAdminDashboard() {
 
       {/* Global Stats */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard value={totalCompletions ?? 0} label="Total Completions"  color="orange" icon={<CheckCircle size={20} className="text-orange-500"/>}/>
-        <StatCard value={totalMembers ?? 0}     label="Total Members"      color="maroon" icon={<Users size={20} className="text-red-700"/>}/>
-        <StatCard value={totalSevas ?? 0}       label="Active Sevas"       color="green"  icon={<Heart size={20} className="text-green-600"/>}/>
-        <StatCard value={centers?.length ?? 0}  label="Active Centers"     color="blue"   icon={<Building2 size={20} className="text-blue-600"/>}/>
+        <StatCard value={total_completions ?? 0} label="Total Completions"  color="orange" icon={<CheckCircle size={20} className="text-orange-500"/>}/>
+        <StatCard value={total_members ?? 0}     label="Total Members"      color="maroon" icon={<Users size={20} className="text-red-700"/>}/>
+        <StatCard value={total_sevas ?? 0}       label="Active Sevas"       color="green"  icon={<Heart size={20} className="text-green-600"/>}/>
+        <StatCard value={centers?.length ?? 0}   label="Active Centers"     color="blue"   icon={<Building2 size={20} className="text-blue-600"/>}/>
       </div>
 
       {/* Center cards */}
@@ -114,11 +124,11 @@ export default async function SuperAdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {recentComps?.map(c => (
+            {recentComps?.map((c: any) => (
               <tr key={c.id} className="border-b border-[rgba(232,213,196,0.4)] hover:bg-[rgba(255,243,224,0.5)]">
-                <td className="px-5 py-3 text-sm font-semibold">{(c.member as any)?.name || '—'}</td>
-                <td className="px-5 py-3 text-sm">{(c.seva as any)?.name || '—'}</td>
-                <td className="px-5 py-3"><Badge variant="center">{(c.center as any)?.name || '—'}</Badge></td>
+                <td className="px-5 py-3 text-sm font-semibold">{c.member?.name || '—'}</td>
+                <td className="px-5 py-3 text-sm">{c.seva?.name || '—'}</td>
+                <td className="px-5 py-3"><Badge variant="center">{c.center?.name || '—'}</Badge></td>
                 <td className="px-5 py-3 text-xs text-[var(--text-muted)]">{c.completed_date}</td>
                 <td className="px-5 py-3 text-xs italic text-[var(--text-muted)] max-w-[160px] truncate">{c.admin_remark || '—'}</td>
               </tr>

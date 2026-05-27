@@ -4,14 +4,18 @@ import { getCookieFromRequest, verifySession } from '@/lib/auth'
 // Routes that do NOT require auth
 const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/logout', '/api/centers/public']
 
+// Static file extensions that should always be public
+const STATIC_EXT = /\.(svg|png|jpg|jpeg|gif|ico|webp|woff|woff2|ttf|otf|eot)$/i
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow public paths and static assets
+  // Allow public paths, static assets, and known static files
   if (
     PUBLIC_PATHS.some(p => pathname.startsWith(p)) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
+    STATIC_EXT.test(pathname) ||
     pathname === '/'
   ) {
     return NextResponse.next()

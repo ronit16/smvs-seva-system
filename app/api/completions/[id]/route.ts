@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import { addDays } from 'date-fns'
 
@@ -10,19 +10,31 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json()
   const { admin_remark, remark_media_url, remark_media_public_id } = body
 
-  const updateData: Record<string, unknown> = { admin_remark }
-  if (remark_media_url) {
-    updateData.remark_media_url         = remark_media_url
-    updateData.remark_media_public_id   = remark_media_public_id
-    updateData.remark_media_expires_at  = addDays(new Date(), 30).toISOString()
+  try {
+    let data
+    if (remark_media_url) {
+      const remark_media_expires_at = addDays(new Date(), 30).toISOString()
+      ;[data] = await sql`
+        UPDATE seva_completions
+        SET admin_remark             = ${admin_remark || null},
+            remark_media_url         = ${remark_media_url},
+            remark_media_public_id   = ${remark_media_public_id || null},
+            remark_media_expires_at  = ${remark_media_expires_at}
+        WHERE id = ${params.id}
+        RETURNING *
+      `
+    } else {
+      ;[data] = await sql`
+        UPDATE seva_completions
+        SET admin_remark = ${admin_remark || null}
+        WHERE id = ${params.id}
+        RETURNING *
+      `
+    }
+
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
-
-  const { data, error } = await supabaseAdmin
-    .from('seva_completions')
-    .update(updateData)
-    .eq('id', params.id)
-    .select().single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
 }

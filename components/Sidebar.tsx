@@ -46,14 +46,27 @@ export default function Sidebar({ role, centerName, userName }: Props) {
   return (
     <aside className="sidebar-gradient w-[260px] min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-50">
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-[rgba(255,215,0,0.15)]">
-        <div className="font-cinzel text-sm text-yellow-300 font-semibold tracking-wide">
-          SMVS Swaminarayan
+      <div className="px-4 py-4 border-b border-[rgba(255,215,0,0.15)]">
+        <div className="flex items-center gap-2.5 mb-2">
+          <img
+            src="/smvs-icon.svg"
+            alt="SMVS"
+            width={34}
+            height={34}
+            className="rounded-lg shrink-0"
+          />
+          <div className="min-w-0">
+            <img
+              src="/logo-white.svg"
+              alt="SMVS Swaminarayan Mandir Vasna Sanstha"
+              style={{ height: '18px', width: 'auto', maxWidth: '160px' }}
+            />
+            <div className="text-[10px] text-white/50 tracking-[1.5px] uppercase mt-0.5">
+              Seva Management
+            </div>
+          </div>
         </div>
-        <div className="text-[11px] text-white/60 tracking-[1.5px] uppercase mt-0.5">
-          Seva Management
-        </div>
-        <span className={`inline-block mt-2 text-[10px] px-2.5 py-0.5 rounded-full font-bold tracking-wide
+        <span className={`inline-block text-[10px] px-2.5 py-0.5 rounded-full font-bold tracking-wide
           ${role === 'super_admin'
             ? 'bg-yellow-400 text-[#3D0C00]'
             : 'bg-white/20 text-white'

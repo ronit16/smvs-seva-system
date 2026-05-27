@@ -178,7 +178,7 @@ export default function MemberPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cream)' }}>
         <div className="text-center">
-          <div className="text-4xl mb-3">🙏</div>
+          <img src="/smvs-icon.svg" alt="SMVS" width={64} height={64} className="mx-auto mb-4 rounded-2xl shadow-lg animate-pulse"/>
           <div className="text-sm text-[var(--text-muted)]">Loading your sevas…</div>
         </div>
       </div>
@@ -190,18 +190,30 @@ export default function MemberPage() {
 
       {/* ── Sticky Header ── */}
       <div className="sticky top-0 z-40" style={{ background: 'linear-gradient(135deg,#3D0C00,#6B1414,#A84400)' }}>
-        <div className="px-5 pt-5 pb-4 flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="font-cinzel text-[10px] text-yellow-300/70 tracking-[2px] uppercase mb-0.5">
-              SMVS Swaminarayan Sanstha
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <img
+              src="/smvs-icon.svg"
+              alt="SMVS"
+              width={40}
+              height={40}
+              className="rounded-xl shrink-0 shadow-lg"
+            />
+            <div className="min-w-0">
+              <img
+                src="/logo-white.svg"
+                alt="SMVS Swaminarayan Mandir Vasna Sanstha"
+                style={{ height: '16px', width: 'auto', maxWidth: '150px' }}
+                className="mb-0.5 opacity-80"
+              />
+              <div className="text-white font-semibold text-[14px] leading-snug truncate">
+                Jai Swaminarayan, {me?.name?.split(' ')[0]}bhai! 🙏
+              </div>
+              <div className="text-white/40 text-[11px]">ID: {me?.userId}</div>
             </div>
-            <div className="text-white font-semibold text-[15px] leading-snug truncate">
-              Jai Swaminarayan, {me?.name?.split(' ')[0]}bhai! 🙏
-            </div>
-            <div className="text-white/40 text-[11px] mt-0.5">Global ID: {me?.userId}</div>
           </div>
           <button onClick={handleLogout}
-            className="flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-xl border border-white/20 text-white/60 hover:bg-white/10 transition-all shrink-0 mt-0.5">
+            className="flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-xl border border-white/20 text-white/60 hover:bg-white/10 transition-all shrink-0">
             <LogOut size={11} /> Logout
           </button>
         </div>

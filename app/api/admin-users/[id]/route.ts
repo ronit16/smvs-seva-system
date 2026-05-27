@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import bcrypt from 'bcryptjs'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
@@ -13,23 +14,30 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Name, email, and center are required' }, { status: 400 })
   }
 
-  // Update Supabase Auth (email + optional password)
-  const authUpdates: { email?: string; password?: string } = { email }
-  if (password) authUpdates.password = password
+  try {
+    let data
+    if (password) {
+      const passwordHash = await bcrypt.hash(password, 10)
+      ;[data] = await sql`
+        UPDATE admin_users
+        SET name = ${name}, email = ${email}, center_id = ${center_id}, password_hash = ${passwordHash}
+        WHERE id = ${params.id}
+        RETURNING id, role, center_id, name, email, created_at
+      `
+    } else {
+      ;[data] = await sql`
+        UPDATE admin_users
+        SET name = ${name}, email = ${email}, center_id = ${center_id}
+        WHERE id = ${params.id}
+        RETURNING id, role, center_id, name, email, created_at
+      `
+    }
 
-  const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(params.id, authUpdates)
-  if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
-
-  // Update admin_users record
-  const { data, error } = await supabaseAdmin
-    .from('admin_users')
-    .update({ name, email, center_id })
-    .eq('id', params.id)
-    .select()
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -38,8 +46,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  // Deleting from Auth cascades to admin_users via FK
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(params.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  try {
+    await sql`DELETE FROM admin_users WHERE id = ${params.id}`
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

@@ -1,17 +1,14 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import Sidebar from '@/components/Sidebar'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession()
   if (!session || session.role !== 'center_admin') redirect('/login')
 
-  const { data: center } = await supabaseAdmin
-    .from('centers')
-    .select('name')
-    .eq('id', session.centerId!)
-    .single()
+  const rows = await sql`SELECT name FROM centers WHERE id = ${session.centerId!}`
+  const center = rows[0]
 
   return (
     <div className="flex min-h-screen">

@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import StatCard from '@/components/ui/StatCard'
 import Badge, { freqVariant } from '@/components/ui/Badge'
@@ -12,30 +12,48 @@ export default async function AdminDashboard() {
   const cid = session.centerId!
 
   const [
-    { count: memberCount },
-    { count: sevaCount },
-    { count: assignCount },
-    { count: compCount },
-    { data: recentComps },
-    { data: sevas },
+    [{ member_count }],
+    [{ seva_count }],
+    [{ assign_count }],
+    [{ comp_count }],
+    recentComps,
+    sevas,
   ] = await Promise.all([
-    supabaseAdmin.from('members').select('*', { count: 'exact', head: true }).eq('center_id', cid),
-    supabaseAdmin.from('sevas').select('*', { count: 'exact', head: true }).eq('center_id', cid).eq('active', true),
-    supabaseAdmin.from('seva_assignments').select('*', { count: 'exact', head: true }).eq('center_id', cid),
-    supabaseAdmin.from('seva_completions').select('*', { count: 'exact', head: true }).eq('center_id', cid),
-    supabaseAdmin.from('seva_completions')
-      .select('*, member:members(name), seva:sevas(name)')
-      .eq('center_id', cid)
-      .order('created_at', { ascending: false })
-      .limit(6),
-    supabaseAdmin.from('sevas')
-      .select('*, category:seva_categories(name), assignments:seva_assignments(id)')
-      .eq('center_id', cid)
-      .eq('active', true)
-      .limit(8),
+    sql`SELECT COUNT(*)::int AS member_count FROM members WHERE center_id = ${cid}`,
+    sql`SELECT COUNT(*)::int AS seva_count   FROM sevas WHERE center_id = ${cid} AND active = true`,
+    sql`SELECT COUNT(*)::int AS assign_count FROM seva_assignments WHERE center_id = ${cid}`,
+    sql`SELECT COUNT(*)::int AS comp_count   FROM seva_completions WHERE center_id = ${cid}`,
+    sql`
+      SELECT
+        sc.id, sc.admin_remark,
+        sc.completed_date::text AS completed_date,
+        json_build_object('name', m.name) AS member,
+        json_build_object('name', sv.name) AS seva
+      FROM seva_completions sc
+      JOIN members m ON m.global_id = sc.member_id
+      JOIN sevas sv ON sv.id = sc.seva_id
+      WHERE sc.center_id = ${cid}
+      ORDER BY sc.created_at DESC
+      LIMIT 6
+    `,
+    sql`
+      SELECT
+        s.*,
+        json_build_object('name', cat.name) AS category,
+        COALESCE(
+          (SELECT json_agg(json_build_object('id', sa.id))
+           FROM seva_assignments sa WHERE sa.seva_id = s.id),
+          '[]'::json
+        ) AS assignments
+      FROM sevas s
+      JOIN seva_categories cat ON cat.id = s.category_id
+      WHERE s.center_id = ${cid} AND s.active = true
+      ORDER BY s.name
+      LIMIT 8
+    `,
   ])
 
-  const pendingCount = (assignCount || 0) - (compCount || 0)
+  const pendingCount = (assign_count || 0) - (comp_count || 0)
 
   return (
     <div className="p-7 flex-1">
@@ -49,9 +67,9 @@ export default async function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard value={compCount ?? 0}   label="Completed Sevas"  color="orange" icon={<CheckCircle size={20} className="text-orange-500"/>}/>
-        <StatCard value={memberCount ?? 0} label="Total Members"    color="maroon" icon={<Users size={20} className="text-red-700"/>}/>
-        <StatCard value={sevaCount ?? 0}   label="Active Sevas"     color="green"  icon={<Heart size={20} className="text-green-600"/>}/>
+        <StatCard value={comp_count ?? 0}   label="Completed Sevas"  color="orange" icon={<CheckCircle size={20} className="text-orange-500"/>}/>
+        <StatCard value={member_count ?? 0} label="Total Members"    color="maroon" icon={<Users size={20} className="text-red-700"/>}/>
+        <StatCard value={seva_count ?? 0}   label="Active Sevas"     color="green"  icon={<Heart size={20} className="text-green-600"/>}/>
         <StatCard value={Math.max(0, pendingCount)} label="Pending Sevas" color="blue" icon={<Clock size={20} className="text-blue-600"/>}/>
       </div>
 
@@ -71,10 +89,10 @@ export default async function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentComps?.map(c => (
+              {recentComps?.map((c: any) => (
                 <tr key={c.id} className="border-b border-[rgba(232,213,196,0.4)] hover:bg-[rgba(255,243,224,0.5)]">
-                  <td className="px-5 py-3 text-sm font-semibold">{(c.member as any)?.name || '—'}</td>
-                  <td className="px-5 py-3 text-sm text-[var(--text-muted)]">{(c.seva as any)?.name || '—'}</td>
+                  <td className="px-5 py-3 text-sm font-semibold">{c.member?.name || '—'}</td>
+                  <td className="px-5 py-3 text-sm text-[var(--text-muted)]">{c.seva?.name || '—'}</td>
                   <td className="px-5 py-3 text-xs text-[var(--text-muted)]">{c.completed_date}</td>
                   <td className="px-5 py-3">{c.admin_remark
                     ? <span className="text-xs text-green-700 font-medium">✓ Added</span>
@@ -95,7 +113,7 @@ export default async function AdminDashboard() {
             <h2 className="font-cinzel text-sm font-semibold" style={{color:'var(--maroon)'}}>Seva Status</h2>
           </div>
           <div className="p-5 space-y-4">
-            {sevas?.map(s => {
+            {sevas?.map((s: any) => {
               const assigned = (s.assignments as any[])?.length || 0
               return (
                 <div key={s.id}>

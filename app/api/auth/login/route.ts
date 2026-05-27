@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { supabase } from '@/lib/supabase'
+import bcrypt from 'bcryptjs'
+import { sql } from '@/lib/db'
 import { createSession, setSessionCookie } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -11,23 +11,23 @@ export async function POST(req: NextRequest) {
   if (role === 'superadmin' || role === 'admin') {
     const { email, password, centerId } = body
 
-    // Authenticate with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email, password,
-    })
-    if (authError || !authData.user) {
+    // Fetch admin user by email
+    const rows = await sql`
+      SELECT au.*, c.id as center_obj_id, c.name as center_name, c.location as center_location
+      FROM admin_users au
+      LEFT JOIN centers c ON c.id = au.center_id
+      WHERE au.email = ${email}
+    `
+    const adminUser = rows[0]
+
+    if (!adminUser) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Fetch admin_users record
-    const { data: adminUser, error: adminError } = await supabaseAdmin
-      .from('admin_users')
-      .select('*, center:centers(*)')
-      .eq('id', authData.user.id)
-      .single()
-
-    if (adminError || !adminUser) {
-      return NextResponse.json({ error: 'Not authorised as admin' }, { status: 403 })
+    // Verify password
+    const valid = await bcrypt.compare(password, adminUser.password_hash)
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
     // Enforce correct tab: super admin must use Super Admin tab
@@ -40,8 +40,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Wrong center selected' }, { status: 403 })
     }
 
+    // Build center object for session
+    const center = adminUser.center_obj_id
+      ? { id: adminUser.center_obj_id, name: adminUser.center_name, location: adminUser.center_location }
+      : null
+
     const token = await createSession({
-      userId:         authData.user.id,
+      userId:         adminUser.id,
       role:           adminUser.role,
       centerId:       adminUser.center_id,
       memberGlobalId: null,
@@ -57,14 +62,16 @@ export async function POST(req: NextRequest) {
   if (role === 'member') {
     const { globalId } = body
 
-    const { data: member, error } = await supabaseAdmin
-      .from('members')
-      .select('*, center:centers(*)')
-      .eq('global_id', globalId.toUpperCase())
-      .eq('active', true)
-      .single()
+    const rows = await sql`
+      SELECT m.*, c.id as center_obj_id, c.name as center_name
+      FROM members m
+      JOIN centers c ON c.id = m.center_id
+      WHERE m.global_id = ${globalId.toUpperCase()}
+        AND m.active = true
+    `
+    const member = rows[0]
 
-    if (error || !member) {
+    if (!member) {
       return NextResponse.json({ error: 'Global ID not found. Contact your center admin.' }, { status: 401 })
     }
 

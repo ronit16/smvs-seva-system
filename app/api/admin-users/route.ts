@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import bcrypt from 'bcryptjs'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function GET() {
@@ -8,14 +9,17 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('admin_users')
-    .select('*')
-    .eq('role', 'center_admin')
-    .order('name')
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+  try {
+    const data = await sql`
+      SELECT id, role, center_id, name, email, created_at
+      FROM admin_users
+      WHERE role = 'center_admin'
+      ORDER BY name
+    `
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -29,29 +33,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Name, email, password, and center are required' }, { status: 400 })
   }
 
-  // Create Supabase Auth user (no email confirmation needed)
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
-
-  if (authError || !authData.user) {
-    return NextResponse.json({ error: authError?.message || 'Failed to create auth user' }, { status: 500 })
+  try {
+    const passwordHash = await bcrypt.hash(password, 10)
+    const [data] = await sql`
+      INSERT INTO admin_users (role, center_id, name, email, password_hash)
+      VALUES ('center_admin', ${center_id}, ${name}, ${email}, ${passwordHash})
+      RETURNING id, role, center_id, name, email, created_at
+    `
+    return NextResponse.json({ data }, { status: 201 })
+  } catch (err: any) {
+    // Unique violation on email
+    if (err.message?.includes('unique') || err.message?.includes('duplicate')) {
+      return NextResponse.json({ error: 'Email already exists' }, { status: 409 })
+    }
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
-
-  // Insert into admin_users table
-  const { data, error } = await supabaseAdmin
-    .from('admin_users')
-    .insert({ id: authData.user.id, role: 'center_admin', center_id, name, email })
-    .select()
-    .single()
-
-  if (error) {
-    // Rollback auth user on failure
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({ data }, { status: 201 })
 }

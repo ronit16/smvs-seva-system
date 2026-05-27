@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
@@ -9,23 +9,60 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const centerId = searchParams.get('centerId')
 
-  let query = supabaseAdmin
-    .from('members')
-    .select('*, center:centers(id,name), assignments:seva_assignments(count), completions:seva_completions(count)')
-    .order('name')
-
-  // Center Admin: restricted to their center
-  if (session.role === 'center_admin') {
-    query = query.eq('center_id', session.centerId!)
-  } else if (session.role === 'super_admin' && centerId) {
-    // Super Admin can filter by center
-    query = query.eq('center_id', centerId)
+  try {
+    let data
+    if (session.role === 'center_admin') {
+      data = await sql`
+        SELECT
+          m.*,
+          json_build_object('id', c.id, 'name', c.name) AS center,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_assignments WHERE member_id = m.global_id
+          ))) AS assignments,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_completions WHERE member_id = m.global_id
+          ))) AS completions
+        FROM members m
+        JOIN centers c ON c.id = m.center_id
+        WHERE m.center_id = ${session.centerId!}
+        ORDER BY m.name
+      `
+    } else if (session.role === 'super_admin' && centerId) {
+      data = await sql`
+        SELECT
+          m.*,
+          json_build_object('id', c.id, 'name', c.name) AS center,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_assignments WHERE member_id = m.global_id
+          ))) AS assignments,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_completions WHERE member_id = m.global_id
+          ))) AS completions
+        FROM members m
+        JOIN centers c ON c.id = m.center_id
+        WHERE m.center_id = ${centerId}
+        ORDER BY m.name
+      `
+    } else {
+      data = await sql`
+        SELECT
+          m.*,
+          json_build_object('id', c.id, 'name', c.name) AS center,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_assignments WHERE member_id = m.global_id
+          ))) AS assignments,
+          json_build_array(json_build_object('count', (
+            SELECT COUNT(*)::int FROM seva_completions WHERE member_id = m.global_id
+          ))) AS completions
+        FROM members m
+        JOIN centers c ON c.id = m.center_id
+        ORDER BY m.name
+      `
+    }
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
-  // Super Admin with no filter: returns all
-
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
 }
 
 export async function POST(req: NextRequest) {
@@ -41,19 +78,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'global_id, name and phone are required' }, { status: 400 })
   }
 
-  // Center admin can only add to their center
-  const centerId = session.role === 'center_admin'
-    ? session.centerId!
-    : body.center_id
-
+  const centerId = session.role === 'center_admin' ? session.centerId! : body.center_id
   if (!centerId) return NextResponse.json({ error: 'center_id required' }, { status: 400 })
 
-  const { data, error } = await supabaseAdmin
-    .from('members')
-    .insert({ global_id: global_id.toUpperCase(), name, phone, center_id: centerId })
-    .select()
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data }, { status: 201 })
+  try {
+    const [data] = await sql`
+      INSERT INTO members (global_id, name, phone, center_id)
+      VALUES (${global_id.toUpperCase()}, ${name}, ${phone}, ${centerId})
+      RETURNING *
+    `
+    return NextResponse.json({ data }, { status: 201 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

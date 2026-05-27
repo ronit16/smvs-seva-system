@@ -80,15 +80,21 @@ export default function LoginPage() {
       <div className="bg-[rgba(255,252,245,0.97)] rounded-[20px] p-12 w-full max-w-md shadow-2xl border border-[rgba(201,136,13,0.3)] relative z-10 animate-fadeup">
         {/* Logo */}
         <div className="text-center mb-8">
-          <svg width="60" height="48" viewBox="0 0 60 48" className="mx-auto mb-4">
-            <path d="M30 44 C20 32 4 28 4 16 C4 10 10 6 18 10 C22 12 26 16 30 22" fill="#C9880D" opacity="0.7"/>
-            <path d="M30 44 C40 32 56 28 56 16 C56 10 50 6 42 10 C38 12 34 16 30 22" fill="#C9880D" opacity="0.7"/>
-            <path d="M30 44 C24 30 12 24 14 12 C16 6 24 6 28 14 C29 16 30 20 30 24" fill="#E05D00" opacity="0.8"/>
-            <path d="M30 44 C36 30 48 24 46 12 C44 6 36 6 32 14 C31 16 30 20 30 24" fill="#E05D00" opacity="0.8"/>
-            <path d="M30 44 C28 30 26 18 30 8 C34 18 32 30 30 44" fill="#8B1A1A" opacity="0.9"/>
-            <circle cx="30" cy="8" r="4" fill="#FFD700"/>
-          </svg>
-          <h1 className="font-cinzel text-xl font-bold text-maroon-500">SMVS Swaminarayan Sanstha</h1>
+          {/* Icon + horizontal logo stacked */}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <img
+              src="/smvs-icon.svg"
+              alt="SMVS"
+              width={52}
+              height={52}
+              className="rounded-xl shadow-md"
+            />
+            <img
+              src="/logo.svg"
+              alt="SMVS Swaminarayan Mandir Vasna Sanstha"
+              style={{ height: '42px', width: 'auto', maxWidth: '220px' }}
+            />
+          </div>
           <p className="text-xs text-[var(--text-muted)] tracking-[2px] uppercase mt-1">Seva Management System</p>
         </div>
 

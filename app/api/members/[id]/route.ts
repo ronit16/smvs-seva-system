@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -10,28 +10,35 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // Center admin: verify this member belongs to their center
   if (session.role === 'center_admin') {
-    const { data: existing } = await supabaseAdmin.from('members').select('center_id').eq('global_id', params.id).single()
+    const rows = await sql`SELECT center_id FROM members WHERE global_id = ${params.id}`
+    const existing = rows[0]
     if (!existing || existing.center_id !== session.centerId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('members')
-    .update({ name: body.name, phone: body.phone, active: body.active })
-    .eq('global_id', params.id)
-    .select()
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+  try {
+    const [data] = await sql`
+      UPDATE members
+      SET name = ${body.name}, phone = ${body.phone}, active = ${body.active}
+      WHERE global_id = ${params.id}
+      RETURNING *
+    `
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ data })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession()
   if (!session || session.role === 'member') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { error } = await supabaseAdmin.from('members').delete().eq('global_id', params.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  try {
+    await sql`DELETE FROM members WHERE global_id = ${params.id}`
+    return NextResponse.json({ ok: true })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
 }

@@ -5,6 +5,11 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'SMVS Seva Management System',
   description: 'Digital platform for seva distribution and tracking — SMVS Swaminarayan Sanstha',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export const viewport: Viewport = {
