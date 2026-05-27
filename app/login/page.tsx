@@ -83,7 +83,7 @@ export default function LoginPage() {
           {/* Icon + horizontal logo stacked */}
           <div className="flex items-center justify-center gap-3 mb-3">
             <img
-              src="/smvs-icon.svg"
+              src="/smvs-icon.png"
               alt="SMVS"
               width={52}
               height={52}

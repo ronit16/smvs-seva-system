@@ -49,7 +49,7 @@ export default function Sidebar({ role, centerName, userName }: Props) {
       <div className="px-4 py-4 border-b border-[rgba(255,215,0,0.15)]">
         <div className="flex items-center gap-2.5 mb-2">
           <img
-            src="/smvs-icon.svg"
+            src="/smvs-icon.png"
             alt="SMVS"
             width={34}
             height={34}

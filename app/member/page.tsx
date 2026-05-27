@@ -178,7 +178,7 @@ export default function MemberPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--cream)' }}>
         <div className="text-center">
-          <img src="/smvs-icon.svg" alt="SMVS" width={64} height={64} className="mx-auto mb-4 rounded-2xl shadow-lg animate-pulse"/>
+          <img src="/smvs-icon.png" alt="SMVS" width={64} height={64} className="mx-auto mb-4 rounded-2xl shadow-lg animate-pulse"/>
           <div className="text-sm text-[var(--text-muted)]">Loading your sevas…</div>
         </div>
       </div>
@@ -193,7 +193,7 @@ export default function MemberPage() {
         <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <img
-              src="/smvs-icon.svg"
+              src="/smvs-icon.png"
               alt="SMVS"
               width={40}
               height={40}
