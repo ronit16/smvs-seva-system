@@ -67,27 +67,38 @@ export default function CategoriesPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {cats.map(c => (
-          <div key={c.id} className="bg-white rounded-2xl border border-[rgba(212,166,98,0.3)] p-5 hover:shadow-md transition-all">
-            <div className="flex justify-between items-start mb-2">
-              <div className="font-cinzel text-sm font-bold" style={{ color: 'var(--maroon)' }}>{c.name}</div>
-              <div className="flex gap-1.5">
-                <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--saffron)] hover:text-[var(--saffron)]"><Pencil size={13} /></button>
-                <button onClick={() => openDelete(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-500"><Trash2 size={13} /></button>
-              </div>
-            </div>
-            <p className="text-xs text-[var(--text-muted)] leading-relaxed">{c.description || 'No description'}</p>
-            <div className="mt-3 text-xs font-medium" style={{ color: 'var(--gold)' }}>
-              {Array.isArray(c.sevas) ? c.sevas[0]?.count || 0 : 0} seva(s)
-            </div>
-          </div>
-        ))}
-        {!cats.length && (
-          <div className="col-span-3 py-16 text-center text-[var(--text-muted)]">
-            No categories yet. Add your first one!
-          </div>
-        )}
+      <div className="bg-white rounded-2xl border border-[rgba(212,166,98,0.3)] overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-[var(--cream2)]">
+            <tr>
+              {['Name', 'Description', 'Sevas', 'Actions'].map(h => (
+                <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-[0.8px]">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {cats.map(c => (
+              <tr key={c.id} className="border-b border-[rgba(232,213,196,0.4)] hover:bg-[rgba(255,243,224,0.5)]">
+                <td className="px-5 py-3">
+                  <span className="font-cinzel text-sm font-bold" style={{ color: 'var(--maroon)' }}>{c.name}</span>
+                </td>
+                <td className="px-5 py-3 text-xs text-[var(--text-muted)] leading-relaxed">{c.description || 'No description'}</td>
+                <td className="px-5 py-3 text-xs font-medium" style={{ color: 'var(--gold)' }}>
+                  {Array.isArray(c.sevas) ? c.sevas[0]?.count || 0 : 0} seva(s)
+                </td>
+                <td className="px-5 py-3">
+                  <div className="flex gap-1.5">
+                    <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--saffron)] hover:text-[var(--saffron)]"><Pencil size={13} /></button>
+                    <button onClick={() => openDelete(c)} className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:border-red-400 hover:text-red-500"><Trash2 size={13} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!cats.length && (
+              <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-[var(--text-muted)]">No categories yet. Add your first one!</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       <Modal open={modal === 'add'} onClose={() => setModal(null)} title="Add Category"

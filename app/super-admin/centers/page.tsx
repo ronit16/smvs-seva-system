@@ -187,7 +187,7 @@ export default function CentersPage() {
                     {c.name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-cinzel text-sm font-bold truncate" style={{ color: 'var(--maroon)' }}>{c.name}</div>
+                    <div className="font-cinzel text-sm font-bold" style={{ color: 'var(--maroon)' }}>{c.name}</div>
                     <div className="text-xs text-[var(--text-muted)]">{c.location || 'No location set'}</div>
                   </div>
                   <div className="flex gap-1 shrink-0">
@@ -223,8 +223,8 @@ export default function CentersPage() {
                         <div key={a.id} className="flex items-center gap-2 bg-[var(--cream2)] rounded-xl px-3 py-2">
                           <User size={12} className="text-[var(--text-muted)] shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold truncate">{a.name}</div>
-                            <div className="text-[10px] text-[var(--text-muted)] truncate">{a.email}</div>
+                            <div className="text-xs font-semibold">{a.name}</div>
+                            <div className="text-[10px] text-[var(--text-muted)]">{a.email}</div>
                           </div>
                           <button onClick={() => openEditAdmin(a)} title="Edit admin"
                             className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--saffron)] transition-colors">

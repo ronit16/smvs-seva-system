@@ -78,39 +78,3 @@ Please log in to the SMVS Seva App to view details and submit completion.
 *SMVS Seva Management System*`
 }
 
-export function msgMonthlyReminder(params: {
-  memberName: string
-  sevaNames: string[]
-  centerName: string
-}): string {
-  const sevaList = params.sevaNames.map((s, i) => `  ${i + 1}. ${s}`).join('\n')
-  return `🙏 *Jai Swaminarayan*, ${params.memberName}bhai!
-
-A new month has begun. You have the following seva(s) assigned at *${params.centerName}*:
-
-${sevaList}
-
-Please perform your seva with devotion and submit completion proof through the SMVS Seva App.
-
-*SMVS Seva Management System*`
-}
-
-export function msgPendingReminder(params: {
-  memberName: string
-  sevaNames: string[]
-  centerName: string
-  daysLeft: number
-}): string {
-  const sevaList = params.sevaNames.map((s, i) => `  ${i + 1}. ${s}`).join('\n')
-  return `⚠️ *Seva Reminder* — *${params.centerName}*
-
-*Jai Swaminarayan*, ${params.memberName}bhai!
-
-Only *${params.daysLeft} days* remain in this month. The following seva(s) are still *pending*:
-
-${sevaList}
-
-Please complete your seva and submit proof through the SMVS Seva App as soon as possible.
-
-*SMVS Seva Management System*`
-}

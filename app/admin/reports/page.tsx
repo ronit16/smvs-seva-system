@@ -128,7 +128,7 @@ export default function ReportsPage() {
                         ? <div className="relative w-10 h-10 rounded-lg overflow-hidden"><Image src={c.proof_url} alt="proof" fill className="object-cover"/></div>
                         : <span className="text-xs text-[var(--text-muted)]">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-xs text-[var(--text-muted)] italic max-w-[120px] truncate">{c.user_suchan || '—'}</td>
+                    <td className="px-4 py-3 text-xs text-[var(--text-muted)] italic">{c.user_suchan || '—'}</td>
                     <td className="px-4 py-3 max-w-[150px]">
                       {c.admin_remark
                         ? <span className="text-xs font-semibold" style={{color:'var(--maroon)'}}>{c.admin_remark}</span>

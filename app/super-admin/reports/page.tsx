@@ -96,7 +96,7 @@ export default function GlobalReportsPage() {
                   <td className="px-4 py-3">{c.seva && <Badge variant={freqVariant(c.seva.frequency)}>{c.seva.frequency}</Badge>}</td>
                   <td className="px-4 py-3 text-xs text-[var(--text-muted)] whitespace-nowrap">{c.completed_date}</td>
                   <td className="px-4 py-3">{c.proof_url ? <span className="text-xs text-green-700 font-medium">✓ Yes</span> : <span className="text-xs text-[var(--text-muted)]">—</span>}</td>
-                  <td className="px-4 py-3 text-xs italic text-[var(--text-muted)] max-w-[160px] truncate">{c.admin_remark || '—'}</td>
+                  <td className="px-4 py-3 text-xs italic text-[var(--text-muted)]">{c.admin_remark || '—'}</td>
                 </tr>
               ))}
               {!loading && !filtered.length && (

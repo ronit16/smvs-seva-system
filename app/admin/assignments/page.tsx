@@ -92,54 +92,59 @@ export default function AssignmentsPage() {
       {loading ? (
         <div className="text-center py-20 text-[var(--text-muted)]">Loading…</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map(seva => {
-            const leader  = seva.assignments?.find((a: any) => a.role === 'leader')
-            const mems    = seva.assignments?.filter((a: any) => a.role === 'member') || []
-            const done    = seva.assignments?.some((a: any) => a.completions?.length > 0)
-            const assigned = seva.assignments?.length > 0
+        <div className="bg-white rounded-2xl border border-[rgba(212,166,98,0.3)] overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-[var(--cream2)]">
+              <tr>
+                {['Category', 'Seva Name', 'Description', 'Frequency', 'Status', 'Leader', 'Members', 'Actions'].map(h => (
+                  <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-[0.8px]">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(seva => {
+                const leader   = seva.assignments?.find((a: any) => a.role === 'leader')
+                const mems     = seva.assignments?.filter((a: any) => a.role === 'member') || []
+                const done     = seva.assignments?.some((a: any) => a.completions?.length > 0)
+                const assigned = seva.assignments?.length > 0
 
-            return (
-              <div key={seva.id} className="bg-white rounded-2xl border border-[rgba(212,166,98,0.3)] p-5 hover:shadow-md transition-all">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-[1px]" style={{color:'var(--gold)'}}>{seva.category?.name}</div>
-                    <div className="font-cinzel text-sm font-bold mt-0.5" style={{color:'var(--maroon)'}}>{seva.name}</div>
-                  </div>
-                  {done
-                    ? <Badge variant="success"><CheckCircle size={10} className="mr-1"/>Done</Badge>
-                    : assigned
-                      ? <Badge variant="assigned">Assigned</Badge>
-                      : <Badge variant="pending">Unassigned</Badge>
-                  }
-                </div>
-                <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">{seva.description}</p>
-                <Badge variant={freqVariant(seva.frequency)}>{seva.frequency}</Badge>
-
-                {leader && (
-                  <div className="mt-3 pt-3 border-t border-[var(--border)]">
-                    <div className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{color:'var(--gold)'}}>Leader</div>
-                    <div className="text-sm font-semibold" style={{color:'var(--maroon)'}}>{leader.member?.name}</div>
-                  </div>
-                )}
-                {mems.length > 0 && (
-                  <div className="mt-2">
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)] mb-1">Members</div>
-                    <div className="text-xs text-[var(--text-muted)]">{mems.map((m: any) => m.member?.name).join(', ')}</div>
-                  </div>
-                )}
-
-                <button onClick={() => openAssign(seva)}
-                  className="mt-4 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-white text-sm font-semibold"
-                  style={{background:'linear-gradient(135deg,var(--maroon),var(--saffron-dark))'}}>
-                  <Link2 size={13}/> {assigned ? 'Re-assign' : 'Assign Members'}
-                </button>
-              </div>
-            )
-          })}
-          {!filtered.length && (
-            <div className="col-span-3 py-16 text-center text-[var(--text-muted)]">No sevas match this filter.</div>
-          )}
+                return (
+                  <tr key={seva.id} className="border-b border-[rgba(232,213,196,0.4)] hover:bg-[rgba(255,243,224,0.5)]">
+                    <td className="px-5 py-3 text-[11px] font-bold uppercase tracking-[1px]" style={{color:'var(--gold)'}}>{seva.category?.name}</td>
+                    <td className="px-5 py-3">
+                      <span className="font-cinzel text-sm font-bold" style={{color:'var(--maroon)'}}>{seva.name}</span>
+                    </td>
+                    <td className="px-5 py-3 text-xs text-[var(--text-muted)] leading-relaxed">{seva.description}</td>
+                    <td className="px-5 py-3"><Badge variant={freqVariant(seva.frequency)}>{seva.frequency}</Badge></td>
+                    <td className="px-5 py-3">
+                      {done
+                        ? <Badge variant="success"><CheckCircle size={10} className="mr-1"/>Done</Badge>
+                        : assigned
+                          ? <Badge variant="assigned">Assigned</Badge>
+                          : <Badge variant="pending">Unassigned</Badge>
+                      }
+                    </td>
+                    <td className="px-5 py-3 text-xs font-semibold" style={{color:'var(--maroon)'}}>
+                      {leader?.member?.name || <span className="text-[var(--text-muted)]">—</span>}
+                    </td>
+                    <td className="px-5 py-3 text-xs text-[var(--text-muted)]">
+                      {mems.length > 0 ? mems.map((m: any) => m.member?.name).join(', ') : <span>—</span>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <button onClick={() => openAssign(seva)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white text-xs font-semibold whitespace-nowrap"
+                        style={{background:'linear-gradient(135deg,var(--maroon),var(--saffron-dark))'}}>
+                        <Link2 size={12}/> {assigned ? 'Re-assign' : 'Assign'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+              {!filtered.length && (
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-sm text-[var(--text-muted)]">No sevas match this filter.</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 

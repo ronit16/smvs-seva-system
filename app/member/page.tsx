@@ -84,6 +84,7 @@ export default function MemberPage() {
   const [me,          setMe]          = useState<any>(null)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [leaders,     setLeaders]     = useState<Record<string, any>>({})
+  const [teamMembers, setTeamMembers] = useState<Record<string, any[]>>({})
   const [loading,     setLoading]     = useState(true)
 
   const [completing,  setCompleting]  = useState<Assignment | null>(null)
@@ -103,19 +104,24 @@ export default function MemberPage() {
     const myAssigns: Assignment[] = assignData.data || []
     setAssignments(myAssigns)
 
-    // Parallel fetch of leader info for member-role assignments
-    const leaderMap: Record<string, any> = {}
+    // Fetch full team for every assignment (fixes leader display + enables team view for leaders)
+    const leaderMap: Record<string, any>   = {}
+    const teamMap:   Record<string, any[]> = {}
+    const myId = meData.data?.memberGlobalId
     await Promise.all(
-      myAssigns
-        .filter(a => a.role === 'member')
-        .map(async a => {
-          const res = await fetch(`/api/assignments?sevaId=${a.seva.id}`)
-          const d   = await res.json()
-          const ldr = (d.data || []).find((x: any) => x.role === 'leader')
-          if (ldr) leaderMap[a.seva.id] = ldr.member
-        })
+      myAssigns.map(async a => {
+        const res  = await fetch(`/api/assignments/team?sevaId=${a.seva.id}`)
+        const d    = await res.json()
+        const rows: any[] = d.data || []
+        const ldr  = rows.find(x => x.role === 'leader')
+        if (ldr) leaderMap[a.seva.id] = ldr.member
+        teamMap[a.seva.id] = rows
+          .filter(x => x.role === 'member' && x.member?.global_id !== myId)
+          .map(x => x.member)
+      })
     )
     setLeaders(leaderMap)
+    setTeamMembers(teamMap)
     setLoading(false)
   }, [])
 
@@ -260,6 +266,7 @@ export default function MemberPage() {
                 </div>
                 {pending.map(a => (
                   <SevaCard key={a.id} a={a} leader={leaders[a.seva.id]}
+                    teamMembers={teamMembers[a.seva.id]}
                     currentCompletion={null} onComplete={() => openComplete(a)} />
                 ))}
               </section>
@@ -276,6 +283,7 @@ export default function MemberPage() {
                 </div>
                 {completed.map(a => (
                   <SevaCard key={a.id} a={a} leader={leaders[a.seva.id]}
+                    teamMembers={teamMembers[a.seva.id]}
                     currentCompletion={getCurrentPeriodCompletion(a.completions, a.seva.frequency)} />
                 ))}
               </section>
@@ -350,10 +358,11 @@ export default function MemberPage() {
 
 // ── Seva Card ──────────────────────────────────────────────────────────────
 function SevaCard({
-  a, leader, currentCompletion, onComplete,
+  a, leader, teamMembers, currentCompletion, onComplete,
 }: {
   a: Assignment
   leader?: any
+  teamMembers?: any[]
   currentCompletion: Completion | null
   onComplete?: () => void
 }) {
@@ -415,7 +424,7 @@ function SevaCard({
             </Badge>
           </div>
 
-          {/* Leader contact */}
+          {/* Leader contact — visible to regular members */}
           {leader && a.role === 'member' && (
             <div className="p-3 rounded-xl bg-[var(--cream2)] border border-[var(--border)]">
               <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--gold)' }}>Leader</div>
@@ -425,6 +434,24 @@ function SevaCard({
                   className="flex items-center gap-1 text-sm font-semibold shrink-0" style={{ color: 'var(--saffron)' }}>
                   <Phone size={12} /> {leader.phone}
                 </a>
+              </div>
+            </div>
+          )}
+
+          {/* Team members — visible to leader */}
+          {a.role === 'leader' && teamMembers && teamMembers.length > 0 && (
+            <div className="p-3 rounded-xl bg-[var(--cream2)] border border-[var(--border)]">
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--gold)' }}>Team Members</div>
+              <div className="space-y-2">
+                {teamMembers.map((m: any) => (
+                  <div key={m.global_id} className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--maroon)' }}>{m.name}</span>
+                    <a href={`tel:${m.phone}`}
+                      className="flex items-center gap-1 text-sm font-semibold shrink-0" style={{ color: 'var(--saffron)' }}>
+                      <Phone size={12} /> {m.phone}
+                    </a>
+                  </div>
+                ))}
               </div>
             </div>
           )}
