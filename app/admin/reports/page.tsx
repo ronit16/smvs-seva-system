@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import Image from 'next/image'
 import Badge, { freqVariant } from '@/components/ui/Badge'
 import Modal, { ModalField, textareaClass } from '@/components/ui/Modal'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 
 export default function ReportsPage() {
   const [completions, setCompletions] = useState<any[]>([])
@@ -16,6 +17,7 @@ export default function ReportsPage() {
   const [remarkText, setRemarkText]       = useState('')
   const [remarkFile, setRemarkFile]       = useState<File | null>(null)
   const [savingRemark, setSavingRemark]   = useState(false)
+  const [lightboxSrc, setLightboxSrc]     = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const [cRes, aRes] = await Promise.all([
@@ -125,7 +127,7 @@ export default function ReportsPage() {
                     <td className="px-4 py-3 text-xs text-[var(--text-muted)] whitespace-nowrap">{c.completed_date}</td>
                     <td className="px-4 py-3">
                       {c.proof_url
-                        ? <div className="relative w-10 h-10 rounded-lg overflow-hidden"><Image src={c.proof_url} alt="proof" fill className="object-cover"/></div>
+                        ? <div className="relative w-10 h-10 rounded-lg overflow-hidden cursor-zoom-in" onClick={() => setLightboxSrc(c.proof_url)}><Image src={c.proof_url} alt="proof" fill className="object-cover"/></div>
                         : <span className="text-xs text-[var(--text-muted)]">—</span>}
                     </td>
                     <td className="px-4 py-3 text-xs text-[var(--text-muted)] italic">{c.user_suchan || '—'}</td>
@@ -218,6 +220,8 @@ export default function ReportsPage() {
         )}
       </>)}
 
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+
       {/* Sant Remark Modal */}
       <Modal open={!!remarkComp} onClose={() => setRemarkComp(null)} title="Add Sant Remark"
         footer={<>
@@ -237,7 +241,10 @@ export default function ReportsPage() {
               {remarkComp.user_suchan && <div className="text-xs italic mt-1.5">"{remarkComp.user_suchan}"</div>}
             </div>
             {remarkComp.proof_url && (
-              <div className="relative w-full h-40 rounded-xl overflow-hidden">
+              <div
+                className="relative w-full h-40 rounded-xl overflow-hidden cursor-zoom-in"
+                onClick={() => setLightboxSrc(remarkComp.proof_url)}
+              >
                 <Image src={remarkComp.proof_url} alt="proof" fill className="object-cover"/>
               </div>
             )}

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import toast from 'react-hot-toast'
 import Badge, { freqVariant } from '@/components/ui/Badge'
 import Modal, { ModalField, inputClass, textareaClass } from '@/components/ui/Modal'
+import ImageLightbox from '@/components/ui/ImageLightbox'
 import { LogOut, Phone, Clock, CheckCircle2, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface Completion {
@@ -368,6 +369,7 @@ function SevaCard({
 }) {
   const isDone    = !!currentCompletion
   const [open, setOpen] = useState(!isDone) // pending cards start open
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden mb-4 border transition-shadow hover:shadow-md ${
@@ -468,7 +470,10 @@ function SevaCard({
                 </span>
               </div>
               {currentCompletion.proof_url && (
-                <div className="relative w-full h-48 rounded-xl overflow-hidden">
+                <div
+                  className="relative w-full h-48 rounded-xl overflow-hidden cursor-zoom-in"
+                  onClick={() => setLightboxSrc(currentCompletion.proof_url!)}
+                >
                   <Image src={currentCompletion.proof_url} alt="Proof" fill className="object-cover" />
                 </div>
               )}
@@ -486,7 +491,10 @@ function SevaCard({
                     {currentCompletion.admin_remark}
                   </div>
                   {currentCompletion.remark_media_url && (
-                    <div className="relative w-full h-36 rounded-xl overflow-hidden mt-2">
+                    <div
+                      className="relative w-full h-36 rounded-xl overflow-hidden mt-2 cursor-zoom-in"
+                      onClick={() => setLightboxSrc(currentCompletion.remark_media_url!)}
+                    >
                       <Image src={currentCompletion.remark_media_url} alt="Remark media" fill className="object-cover" />
                     </div>
                   )}
@@ -505,6 +513,8 @@ function SevaCard({
           )}
         </div>
       )}
+
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   )
 }
